@@ -38,9 +38,13 @@
    (if (eq :horizontal snake-orientation)
        (progn
          (setq snake-orientation :vertical)
-         (aref [picture-movement-up picture-movement-down] (random 2)))
+         (if (= 1 (line-number-at-pos))
+             'picture-movement-down
+           (aref [picture-movement-up picture-movement-down] (random 2))))
      (setq snake-orientation :horizontal)
-     (aref [picture-movement-left picture-movement-right] (random 2)))))
+     (if (= 0 (current-column))
+         'picture-movement-right
+       (aref [picture-movement-left picture-movement-right] (random 2))))))
 
 (defun turnp ()
   (or
