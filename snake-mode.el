@@ -63,7 +63,10 @@
 
 (define-minor-mode snake-mode "Turns your lines into a snake in picture mode." nil "Snake" nil
   (if snake-mode
-      (add-hook 'post-command-hook 'snake nil :local)
+      (if (eq 'picture-mode major-mode)
+          (add-hook 'post-command-hook 'snake nil :local)
+        (setq snake-mode nil)
+        (user-error "Snake mode is a minor mode designed for picture mode. Please enable picture mode."))
     (remove-hook 'post-command-hook 'snake :local))
   :group 'snake-mode)
 
