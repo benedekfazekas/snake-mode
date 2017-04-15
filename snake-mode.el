@@ -32,21 +32,22 @@
 (defcustom snake--turn-probability 10 "probability percentage of the snake turning at the current key press"
   :group 'snake-mode)
 
-(defun snake--carry-on ()
-  (picture-motion 0))
+(defcustom snake-collision-fn 'snake--collision-notify "Function that handles collision."
+  :group 'snake-mode)
 
-(defun snake--turn ()
-  (funcall
-   (if (eq :horizontal snake--orientation)
-       (progn
-         (setq snake--orientation :vertical)
-         (if (= 1 (line-number-at-pos))
-             'picture-movement-down
-           (aref [picture-movement-up picture-movement-down] (random 2))))
-     (setq snake--orientation :horizontal)
-     (if (= 0 (current-column))
-         'picture-movement-right
-       (aref [picture-movement-left picture-movement-right] (random 2))))))
+(defun snake--next-movement ()
+  (if (not (snake--turnp))
+      (apply-partially 'picture-motion 0)
+    (if (eq :horizontal snake--orientation)
+        (progn
+          (setq snake--orientation :vertical)
+          (if (= 1 (line-number-at-pos))
+              'picture-movement-down
+            (aref [picture-movement-up picture-movement-down] (random 2))))
+      (setq snake--orientation :horizontal)
+      (if (= 0 (current-column))
+          'picture-movement-right
+        (aref [picture-movement-left picture-movement-right] (random 2))))))
 
 (defun snake--turnp ()
   (or
@@ -54,14 +55,27 @@
    (and (eq :vertical snake--orientation) (= 1 (line-number-at-pos)))
    (< (random 100) snake--turn-probability)))
 
+(defun snake--collision-char ()
+  (let ((next-char (progn
+                     (picture-motion 1)
+                     (char-after))))
+    (picture-motion-reverse 1)
+    (when (and next-char (string-match "\\w" (string next-char)))
+      next-char)))
+
+(defun snake--collision-notify (char)
+  (message "Colliding with '%s'" (string char)))
+
 (defun snake ()
   (let ((keys (this-command-keys)))
       (when (and (stringp keys)
                  (string-match-p "\\w" keys))
         (picture-motion-reverse 0)
-        (if (snake--turnp)
-            (snake--turn)
-          (snake--carry-on)))))
+        (let ((next-move  (snake--next-movement))
+              (collision-char (snake--collision-char)))
+          (when collision-char
+            (funcall snake-collision-fn collision-char))
+          (funcall next-move)))))
 
 (define-minor-mode snake-mode "Turns your lines into a snake in picture mode." nil "Snake" nil
   (if snake-mode
