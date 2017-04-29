@@ -29,14 +29,17 @@
 
 (defvar-local snake--orientation :horizontal "stores the snake's current orientation")
 
-(defcustom snake--turn-probability 10 "probability percentage of the snake turning at the current key press"
+(defcustom snake-turn-probability 10 "probability percentage of the snake turning at the current key press"
   :group 'snake-mode)
+
+(defcustom snake-detect-collision t "detect collision if t otherwise ignore collisions"
+ :group 'snake-mode)
 
 (defcustom snake-collision-fn 'snake--collision-notify "Function that handles collision."
   :group 'snake-mode)
 
 (defun snake--next-movement ()
-  (if (not (snake--turnp))
+  (if (not (snake--turn-p))
       (apply-partially 'picture-motion 0)
     (if (eq :horizontal snake--orientation)
         (progn
@@ -49,11 +52,11 @@
           'picture-movement-right
         (aref [picture-movement-left picture-movement-right] (random 2))))))
 
-(defun snake--turnp ()
+(defun snake--turn-p ()
   (or
    (and (eq :horizontal snake--orientation) (= 0 (current-column)))
    (and (eq :vertical snake--orientation) (= 1 (line-number-at-pos)))
-   (< (random 100) snake--turn-probability)))
+   (< (random 100) snake-turn-probability)))
 
 (defun snake--collision-char ()
   (let ((next-char (progn
@@ -72,7 +75,8 @@
                  (string-match-p "\\w" keys))
         (picture-motion-reverse 0)
         (let ((next-move  (snake--next-movement))
-              (collision-char (snake--collision-char)))
+              (collision-char (when snake-detect-collision
+                                (snake--collision-char))))
           (when collision-char
             (funcall snake-collision-fn collision-char))
           (funcall next-move)))))
