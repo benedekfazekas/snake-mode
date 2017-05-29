@@ -35,7 +35,9 @@
 (defcustom snake-detect-collision t "detect collision if t otherwise ignore collisions"
  :group 'snake-mode)
 
-(defcustom snake-collision-fn 'snake--collision-notify "Function that handles collision."
+(defcustom snake-collision-fn 'snake--collision-notify "Function that handles collision.
+Called before the collision. Should be a function with two parameters. First parameter is the character currently
+printed, second parameter is the character the snake is colliding with."
   :group 'snake-mode)
 
 (defun snake--next-movement ()
@@ -66,8 +68,8 @@
     (when (and next-char (string-match "\\w" (string next-char)))
       next-char)))
 
-(defun snake--collision-notify (char)
-  (message "Colliding with '%s'" (string char)))
+(defun snake--collision-notify (key char)
+  (message "Printing %s and colliding with '%s'" key (string char)))
 
 (defun snake ()
   (let ((keys (this-command-keys)))
@@ -78,7 +80,7 @@
               (collision-char (when snake-detect-collision
                                 (snake--collision-char))))
           (when collision-char
-            (funcall snake-collision-fn collision-char))
+            (funcall snake-collision-fn keys collision-char))
           (funcall next-move)))))
 
 (define-minor-mode snake-mode "Turns your lines into a snake in picture mode." nil "Snake" nil
